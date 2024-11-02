@@ -59,8 +59,8 @@
                 const result = await tonConnectUI.sendTransaction(transaction);
 
                 // you can use signed boc to find the transaction 
-                const someTxData = await myAppExplorerService.getTransaction(result.boc);
-                alert('Transaction was sent successfully', someTxData);
+                // const someTxData = await myAppExplorerService.getTransaction(result.boc);
+                alert(result.boc);
             } catch (e) {
                 console.error(e);
             }
