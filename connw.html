@@ -35,7 +35,7 @@
             const currentAccount = tonConnectUI.account;
             const currentIsConnectedStatus = tonConnectUI.connected;
             const currentModalState = tonConnectUI.modalState;
-            document.getElementById("info").innerHTML += currentWallet + currentWalletInfo + currentAccount + currentIsConnectedStatus + currentModalState;
+            document.getElementById("info").innerHTML += JSON.stringify(currentWallet) + JSON.stringify(currentWalletInfo) + JSON.stringify(currentAccount) + currentIsConnectedStatus + JSON.stringify(currentModalState);
         }
 
         async function trigerPay() {
