@@ -1,7 +1,7 @@
 {
-  "url": "https://github.com/triplestudio", // required
+  "url": "https://triplestudio.github.io/try", // required
   "name": "StudyInDo", // required
-  "iconUrl": "https://github.com/triplestudio/try/logo.png", // required
+  "iconUrl": "https://triplestudio.github.io/try/logo.png", // required
   "termsOfUseUrl": null, // optional
   "privacyPolicyUrl": null // optional
 }
