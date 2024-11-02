@@ -8,13 +8,63 @@
 </head>
 <body>
     <div>a new world!</div>
+    <div id="info"></div>
     <div id="ton-connect"></div>
+
+    <div>
+        <input type="button" value="发起支付" onclick="trigerPay()" />
+    </div>
 
     <script>
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://github.com/triplestudio/try/tonconnect-manifest.json',
             buttonRootId: 'ton-connect'
         });
+        showState();
+        
+
+        const unsubscribeModal = tonConnectUI.onModalStateChange(
+            (state) => {
+                showState();
+            }
+        );
+
+        function showState() {
+            const currentWallet = tonConnectUI.wallet;
+            const currentWalletInfo = tonConnectUI.walletInfo;
+            const currentAccount = tonConnectUI.account;
+            const currentIsConnectedStatus = tonConnectUI.connected;
+            const currentModalState = tonConnectUI.modalState;
+            document.getElementById("info").innerHTML += currentWallet + currentWalletInfo + currentAccount + currentIsConnectedStatus + currentModalState;
+        }
+
+        function trigerPay() {
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 60, // 60 sec
+                messages: [
+                    {
+                        address: "EQBBJBB3HagsujBqVfqeDUPJ0kXjgTPLWPFFffuNXNiJL0aA",
+                        amount: "20000000",
+                        // stateInit: "base64bocblahblahblah==" // just for instance. Replace with your transaction initState or remove
+                    },
+                    {
+                        address: "EQDmnxDMhId6v1Ofg_h5KR5coWlFG6e86Ro3pc7Tq4CA0-Jn",
+                        amount: "60000000",
+                        // payload: "base64bocblahblahblah==" // just for instance. Replace with your transaction payload or remove
+                    }
+                ]
+            }
+
+            try {
+                const result = await tonConnectUI.sendTransaction(transaction);
+
+                // you can use signed boc to find the transaction 
+                const someTxData = await myAppExplorerService.getTransaction(result.boc);
+                alert('Transaction was sent successfully', someTxData);
+            } catch (e) {
+                console.error(e);
+            }
+        }
     </script>
 </body>
 </html>
