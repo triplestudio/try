@@ -19,6 +19,7 @@
         legend { padding:3px; background:#dedede; border-radius:3px; font-size:12px; font-weight:bold;}
         #ton-connect button {margin:0 auto;}
         #paylist .item { border-bottom:solid 1px dashed; padding:3px; margin:5px; font-size:12px;}
+        .add{overflow-wrap: break-word; word-wrap: break-word;width: 100%;box-sizing:border-box}
     </style>
 </head>
 <body>
@@ -198,9 +199,12 @@
         async function qtrans() {
             const tonweb = new TonWeb();
             const history = await tonweb.getTransactions("UQCgDee5SkCX9QV029R2u39ev9q0aW5wP8DBEqBSUt35rlyt");
-            for (var i = 0; i < history.length; i++) { 
-                if(history[i].in_msg.value>0)
-                    $("#paylist").append(`<div class='item'><div>${formatDateToSeconds(new Date(history[i].utime * 1000))} : ${history[i].in_msg.value / 1000000000} TON</div><div>From:${history[i].in_msg.source}</div><div>${history[i].in_msg.message}</div></div>`);
+            for (var i = 0; i < history.length; i++) {
+                if (history[i].in_msg.value > 0) {
+                    var source = history[i].in_msg.source;
+                    source = source.slice(0, 10) + "......" + source.slice(-10);
+                    $("#paylist").append(`<div class='item'><div>${formatDateToSeconds(new Date(history[i].utime * 1000))} : ${history[i].in_msg.value / 1000000000} TON</div><div class='add'>From:${source}</div><div>${history[i].in_msg.message}</div></div>`);
+                }
             }
         }
 
