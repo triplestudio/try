@@ -83,6 +83,9 @@
             manifestUrl: 'https://triplestudio.github.io/try/tonconnect-manifest.json',
             buttonRootId: 'ton-connect'
         });
+        tonConnectUI.uiOptions = {
+            twaReturnUrl: 'https://t.me/OneinfiveBot/try/connw.html'
+        };
 
         // Fetch wallets list  https://github.com/ton-connect/sdk/tree/main/packages/ui#use-inside-twa-telegram-web-app
         (async () => {
