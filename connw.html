@@ -5,27 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STUDY</title>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="tonweb.js"></script>
+    <script type="text/javascript">
+            // 参考：TON Connect for JS https://docs.ton.org/v3/guidelines/ton-connect/frameworks/web
+            //
+    </script>
+    <style>
+        .wicon { width:24px; height:24px; vertical-align:middle; margin:5px; }
+        .btnpay { background:yellow; border-radius:10px; border:solid 2px green; width:100%; height:32px;}
+    </style>
 </head>
 <body>
-    <div>a new world 11111111</div>
-    <div id="info"></div>
-    <div id="ton-connect"></div>
-
     <div>
-        <input type="button" value="发起支付" onclick="trigerPay()" />
+        <fieldset><legend>用户信息</legend>
+         <div></div>
+        </fieldset>
     </div>
 
+    <div>
+        <fieldset>
+            <legend>连接钱包</legend>
+            <div id="ton-connect"></div>
+            <div>状态[<span id="cstate"></span>]：<span id="wname"></span></div>
+            <div id="account"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>支持钱包</legend>
+            <div>
+                <ul id="walletlist">
+                </ul>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>发起充值</legend>
+            <div><input type="button" value="发起支付" class="btnpay" onclick="trigerPay()" /></div>
+        </fieldset>
+    </div>
+
+    <div>a new world 11111111</div>
+    <div id="info"></div>
+     
+    <!---------------------------------------------------------------------->
     <script>
+        // 取得一个随机数
+
+
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://triplestudio.github.io/try/tonconnect-manifest.json',
             buttonRootId: 'ton-connect'
         });
-        showState();
+
+        // Fetch wallets list  https://github.com/ton-connect/sdk/tree/main/packages/ui#use-inside-twa-telegram-web-app
+        (async () => {
+            const walletsList = await tonConnectUI.getWallets();
+            for (var i = 0; i < walletsList.length; i++) {
+                $("#walletlist").append(`<li><img class='wicon' src='${walletsList[i].imageUrl}' />${walletsList[i].name}</li>`);
+            }
+        }) (); 
         
 
         const unsubscribeModal = tonConnectUI.onModalStateChange(
             (state) => {
                 showState();
+            }
+        );
+
+        // 连接状态变化事件
+        const scsubscribe = tonConnectUI.onStatusChange(
+            walletAndwalletInfo => {
+                console.log(walletAndwalletInfo);
+                if (walletAndwalletInfo == null) {
+                    $("#wname").text("无");
+                    $("#account").text("");
+                } else {
+                    $("#wname").text(walletAndwalletInfo.name);
+                    if (walletAndwalletInfo.account != null) {
+                        // $("#account").text(walletAndwalletInfo.account.address);
+                    }
+                }
             }
         );
 
@@ -35,35 +95,61 @@
             const currentAccount = tonConnectUI.account;
             const currentIsConnectedStatus = tonConnectUI.connected;
             const currentModalState = tonConnectUI.modalState;
-            document.getElementById("info").innerHTML += JSON.stringify(currentWallet) + JSON.stringify(currentWalletInfo) + JSON.stringify(currentAccount) + currentIsConnectedStatus + JSON.stringify(currentModalState);
+            console.log(JSON.stringify(currentWallet) + JSON.stringify(currentWalletInfo) + JSON.stringify(currentAccount) + currentIsConnectedStatus + JSON.stringify(currentModalState));
+            $("#cstate").html(currentIsConnectedStatus ? "<b style='color:green'>连接</b>" : "<b style='color:red'>断开</b>") 
         }
 
+        // SDK: https://ton-connect.github.io/sdk/modules/_tonconnect_sdk.html
+        // messages:https://ton-connect.github.io/sdk/interfaces/_tonconnect_sdk.SendTransactionRequest.html#messages
         async function trigerPay() {
+            if (!tonConnectUI.connected) {
+                alert("未连接钱包");
+                return;
+            }
+            let a = new TonWeb.boc.Cell();
+            a.bits.writeUint(0, 32);
+            a.bits.writeString("hello11");
+            let payload = TonWeb.utils.bytesToBase64(await a.toBoc());
+
             const transaction = {
+                // network: "testnet", // mainnet or testnet
                 validUntil: Math.floor(Date.now() / 1000) + 60, // 60 sec
-                messages: [
+                messages: [ 
                     {
-                        address: "EQBBJBB3HagsujBqVfqeDUPJ0kXjgTPLWPFFffuNXNiJL0aA",
+                        address: "UQCgDee5SkCX9QV029R2u39ev9q0aW5wP8DBEqBSUt35rlyt", // 收款
                         amount: "20000000",
-                        // stateInit: "base64bocblahblahblah==" // just for instance. Replace with your transaction initState or remove
-                    },
-                    {
-                        address: "EQDmnxDMhId6v1Ofg_h5KR5coWlFG6e86Ro3pc7Tq4CA0-Jn",
-                        amount: "60000000",
-                        // payload: "base64bocblahblahblah==" // just for instance. Replace with your transaction payload or remove
+                        payload: payload
                     }
                 ]
             }
 
             try {
                 const result = await tonConnectUI.sendTransaction(transaction);
+                console.log(result.boc); 
 
-                // you can use signed boc to find the transaction 
-                // const someTxData = await myAppExplorerService.getTransaction(result.boc);
-                alert(result.boc);
+                const bocCellBytes = await TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(result.boc)).hash();
+
+
+                console.log("Transaction Hash:", TonWeb.utils.bytesToHex(bocCellBytes));
+                // Transaction Hash: 2659aa16d778c838a6509c165cdec6ebb357d7edca7d7899bdd588eba4f3a94f
+                // Transaction Hash: 530da8f487629c1f5cc137d96b36903c529cf2fbe7b6a7a37efa32155a9144bc
+
+                console.log("https://tonscan.org/tx/by-msg-hash/" + hashBase64);
+
+                // you can use signed boc to find the transaction
+                // 去查询链上交易 https://github.com/toncenter/tonweb
+                console.log(result.boc);
+                //const someTxData = await myAppExplorerService.getTransaction(result.boc);
+                //console.log(someTxData);
+                alert("支付完成");
             } catch (e) {
-                console.error(e);
+                console.log(e);
             }
+        }
+
+        function qtrans() {
+            const tonweb = new TonWeb();
+
         }
     </script>
 </body>
