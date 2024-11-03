@@ -45,7 +45,7 @@
 
         <fieldset>
             <legend>发起充值</legend>
-            <div><input type="button" value="发起支付" class="btnpay" onclick="trigerPay()" /></div>
+            <div><input type="button" value="支付 0.02TON" class="btnpay" onclick="trigerPay()" /></div>
         </fieldset>
     </div>
 
@@ -137,7 +137,7 @@
             }
             let a = new TonWeb.boc.Cell();
             a.bits.writeUint(0, 32);
-            a.bits.writeString("hello11");
+            a.bits.writeString(Math.random());
             let payload = TonWeb.utils.bytesToBase64(await a.toBoc());
 
             const transaction = {
@@ -172,7 +172,7 @@
                 //console.log(someTxData);
                 tg.showAlert("支付完成");
             } catch (e) {
-                tg.showAlert(JSON.stringify(e));
+                tg.showAlert("支付取消：" + JSON.stringify(e));
                 console.log(e);
             }
         }
