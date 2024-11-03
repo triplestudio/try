@@ -180,6 +180,7 @@
                 //const someTxData = await myAppExplorerService.getTransaction(result.boc);
                 //console.log(someTxData);
                 tg.showAlert("支付完成");
+                qtrans();
             } catch (e) {
                 tg.showAlert("支付取消：" + JSON.stringify(e));
                 console.log(e);
