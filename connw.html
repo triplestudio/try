@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STUDY</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="tonweb.js"></script>
@@ -14,12 +15,15 @@
     <style>
         .wicon { width:24px; height:24px; vertical-align:middle; margin:5px; }
         .btnpay { background:yellow; border-radius:10px; border:solid 2px green; width:100%; height:32px;}
+        fieldset { border-radius:10px; border:solid 1px gray; margin-bottom:15px;}
+        legend { padding:3px; background:#dedede; border-radius:3px; font-size:12px; font-weight:bold;}
     </style>
 </head>
 <body>
     <div>
-        <fieldset><legend>用户信息</legend>
-         <div></div>
+        <fieldset>
+            <legend>用户信息</legend>
+            <div id="user-info"></div>
         </fieldset>
     </div>
 
@@ -45,12 +49,34 @@
         </fieldset>
     </div>
 
-    <div>a new world 11111111</div>
-    <div id="info"></div>
-     
     <!---------------------------------------------------------------------->
+
+
     <script>
-        // 取得一个随机数
+        // 获取 Telegram Web App 的初始化数据
+        const tg = window.Telegram.WebApp;
+
+        // 显示用户信息
+        function displayUserInfo() {
+            const user = tg.initDataUnsafe.user;
+            const userInfoDiv = document.getElementById('user-info');
+
+            if (user) {
+                userInfoDiv.innerHTML = `
+                            <p><strong>Username:</strong> ${user.username || ''}</p>
+                            <p><strong>ID:</strong> ${user.id}</p>
+                        `;
+            } else {
+                userInfoDiv.innerHTML = '<p>信息不可用</p>';
+            }
+        }
+
+        // 初始化并显示用户信息
+        tg.ready();
+        displayUserInfo();
+    </script>
+
+    <script>
 
 
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -64,8 +90,8 @@
             for (var i = 0; i < walletsList.length; i++) {
                 $("#walletlist").append(`<li><img class='wicon' src='${walletsList[i].imageUrl}' />${walletsList[i].name}</li>`);
             }
-        }) (); 
-        
+        })();
+
 
         const unsubscribeModal = tonConnectUI.onModalStateChange(
             (state) => {
@@ -96,14 +122,14 @@
             const currentIsConnectedStatus = tonConnectUI.connected;
             const currentModalState = tonConnectUI.modalState;
             console.log(JSON.stringify(currentWallet) + JSON.stringify(currentWalletInfo) + JSON.stringify(currentAccount) + currentIsConnectedStatus + JSON.stringify(currentModalState));
-            $("#cstate").html(currentIsConnectedStatus ? "<b style='color:green'>连接</b>" : "<b style='color:red'>断开</b>") 
+            $("#cstate").html(currentIsConnectedStatus ? "<b style='color:green'>连接</b>" : "<b style='color:red'>断开</b>")
         }
 
         // SDK: https://ton-connect.github.io/sdk/modules/_tonconnect_sdk.html
         // messages:https://ton-connect.github.io/sdk/interfaces/_tonconnect_sdk.SendTransactionRequest.html#messages
         async function trigerPay() {
             if (!tonConnectUI.connected) {
-                alert("未连接钱包");
+                tg.showAlert("未连接钱包");
                 return;
             }
             let a = new TonWeb.boc.Cell();
@@ -114,7 +140,7 @@
             const transaction = {
                 // network: "testnet", // mainnet or testnet
                 validUntil: Math.floor(Date.now() / 1000) + 60, // 60 sec
-                messages: [ 
+                messages: [
                     {
                         address: "UQCgDee5SkCX9QV029R2u39ev9q0aW5wP8DBEqBSUt35rlyt", // 收款
                         amount: "20000000",
@@ -125,7 +151,7 @@
 
             try {
                 const result = await tonConnectUI.sendTransaction(transaction);
-                console.log(result.boc); 
+                console.log(result.boc);
 
                 const bocCellBytes = await TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(result.boc)).hash();
 
@@ -141,8 +167,9 @@
                 console.log(result.boc);
                 //const someTxData = await myAppExplorerService.getTransaction(result.boc);
                 //console.log(someTxData);
-                alert("支付完成");
+                tg.showAlert("支付完成");
             } catch (e) {
+                tg.showAlert(JSON.stringify(e));
                 console.log(e);
             }
         }
