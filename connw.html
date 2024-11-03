@@ -17,6 +17,8 @@
         .btnpay { background:yellow; border-radius:10px; border:solid 2px green; width:100%; height:32px;}
         fieldset { border-radius:10px; border:solid 1px gray; margin-bottom:15px;}
         legend { padding:3px; background:#dedede; border-radius:3px; font-size:12px; font-weight:bold;}
+        #ton-connect button {margin:0 auto;}
+        #paylist .item { border-bottom:solid 1px dashed; padding:3px; margin:5px; font-size:12px;}
     </style>
 </head>
 <body>
@@ -30,9 +32,20 @@
     <div>
         <fieldset>
             <legend>连接钱包</legend>
-            <div id="ton-connect"></div>
+            <div id="ton-connect" style="text-align:center"></div>
             <div>状态[<span id="cstate"></span>]：<span id="wname"></span></div>
             <div id="account"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>发起充值</legend>
+            <div><input type="button" value="支付 0.02TON" class="btnpay" onclick="trigerPay()" /></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>充值列表</legend>
+            <div id="paylist"> 
+            </div>
         </fieldset>
 
         <fieldset>
@@ -41,11 +54,6 @@
                 <ul id="walletlist">
                 </ul>
             </div>
-        </fieldset>
-
-        <fieldset>
-            <legend>发起充值</legend>
-            <div><input type="button" value="支付 0.02TON" class="btnpay" onclick="trigerPay()" /></div>
         </fieldset>
     </div>
 
@@ -163,7 +171,7 @@
                 // Transaction Hash: 2659aa16d778c838a6509c165cdec6ebb357d7edca7d7899bdd588eba4f3a94f
                 // Transaction Hash: 530da8f487629c1f5cc137d96b36903c529cf2fbe7b6a7a37efa32155a9144bc
 
-                console.log("https://tonscan.org/tx/by-msg-hash/" + hashBase64);
+                // console.log("https://tonscan.org/tx/by-msg-hash/" + hashBase64);
 
                 // you can use signed boc to find the transaction
                 // 去查询链上交易 https://github.com/toncenter/tonweb
@@ -177,10 +185,26 @@
             }
         }
 
-        function qtrans() {
-            const tonweb = new TonWeb();
-
+        function formatDateToSeconds(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         }
+
+        async function qtrans() {
+            const tonweb = new TonWeb();
+            const history = await tonweb.getTransactions("UQCgDee5SkCX9QV029R2u39ev9q0aW5wP8DBEqBSUt35rlyt");
+            for (var i = 0; i < history.length; i++) { 
+                if(history[i].in_msg.value>0)
+                    $("#paylist").append(`<div class='item'><div>${formatDateToSeconds(new Date(history[i].utime * 1000))} : ${history[i].in_msg.value / 1000000000} TON</div><div>From:${history[i].in_msg.source}</div><div>${history[i].in_msg.message}</div></div>`);
+            }
+        }
+
+        qtrans();
     </script>
 </body>
 </html>
