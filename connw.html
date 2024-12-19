@@ -36,6 +36,7 @@
             <div id="ton-connect" style="text-align:center"></div>
             <div>状态[<span id="cstate"></span>]：<span id="wname"></span></div>
             <div id="account"></div>
+            <div>余额: <span id="balance">0</span> TON</div>
         </fieldset>
 
         <fieldset>
@@ -90,7 +91,8 @@
 
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://triplestudio.github.io/try/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect'
+            buttonRootId: 'ton-connect',
+            networkId: -3 // -3 表示测试网络，1 表示主网
         });
         tonConnectUI.uiOptions = {
             twaReturnUrl: 'https://t.me/OneinfiveBot/try/connw.html'
@@ -150,11 +152,10 @@
             let payload = TonWeb.utils.bytesToBase64(await a.toBoc());
 
             const transaction = {
-                // network: "testnet", // mainnet or testnet
                 validUntil: Math.floor(Date.now() / 1000) + 60, // 60 sec
                 messages: [
                     {
-                        address: "UQCgDee5SkCX9QV029R2u39ev9q0aW5wP8DBEqBSUt35rlyt", // 收款
+                        address: "0QCmGbUPCY43TBrQzkBkVakKuJh8hNdl7ZyNOmI2Pfy6A4sh", // 收款
                         amount: "20000000",
                         payload: payload
                     }
@@ -168,7 +169,7 @@
                 const bocCellBytes = await TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(result.boc)).hash();
 
 
-                console.log("Transaction Hash:", TonWeb.utils.bytesToHex(bocCellBytes));
+                console.log("Transaction Hash:", TonWeb.utils.bytesToBase64(bocCellBytes));
                 // Transaction Hash: 2659aa16d778c838a6509c165cdec6ebb357d7edca7d7899bdd588eba4f3a94f
                 // Transaction Hash: 530da8f487629c1f5cc137d96b36903c529cf2fbe7b6a7a37efa32155a9144bc
 
@@ -179,7 +180,7 @@
                 console.log(result.boc);
                 //const someTxData = await myAppExplorerService.getTransaction(result.boc);
                 //console.log(someTxData);
-                tg.showAlert("支付完成");
+                alert("支付完成");
                 qtrans();
             } catch (e) {
                 tg.showAlert("支付取消：" + JSON.stringify(e));
@@ -198,18 +199,38 @@
         }
 
         async function qtrans() {
-            const tonweb = new TonWeb();
-            const history = await tonweb.getTransactions("UQCgDee5SkCX9QV029R2u39ev9q0aW5wP8DBEqBSUt35rlyt");
+            const tonweb = new TonWeb(new TonWeb.HttpProvider('https://testnet.toncenter.com/api/v2/jsonRPC'));
+            const history = await tonweb.getTransactions("0QCmGbUPCY43TBrQzkBkVakKuJh8hNdl7ZyNOmI2Pfy6A4sh");
             for (var i = 0; i < history.length; i++) {
                 if (history[i].in_msg.value > 0) {
                     var source = history[i].in_msg.source;
                     source = source.slice(0, 10) + "......" + source.slice(-10);
-                    $("#paylist").append(`<div class='item'><div>${formatDateToSeconds(new Date(history[i].utime * 1000))} : ${history[i].in_msg.value / 1000000000} TON</div><div class='add'>From:${source}</div><div>${history[i].in_msg.message}</div></div>`);
+                    $("#paylist").append(`<div class='item'><div>${formatDateToSeconds(new Date(history[i].utime * 1000))} : ${history[i].in_msg.value / 1000000000} TON</div><div class='add'>From:${source}</div><div>${history[i].in_msg.message}</div><div>${history[i].hash}</div></div>`);
                 }
             }
         }
 
-        qtrans();
+        // qtrans();
+
+        async function getBalance() {
+            // 使用测试网络配置初始化 TonWeb
+            const tonweb = new TonWeb(new TonWeb.HttpProvider('https://testnet.toncenter.com/api/v2/jsonRPC'));
+            try {
+                const balance = await tonweb.getBalance("0QCmGbUPCY43TBrQzkBkVakKuJh8hNdl7ZyNOmI2Pfy6A4sh");
+                // 将余额从纳诺TON转换为TON (1 TON = 1,000,000,000 纳诺TON)
+                const balanceInTon = balance / 1000000000;
+                document.getElementById('balance').textContent = balanceInTon;
+            } catch (error) {
+                console.error("获取余额失败:", error);
+                document.getElementById('balance').textContent = "获取失败";
+            }
+        }
+
+        // 页面加载时获取余额
+        getBalance();
+
+        // 每60秒更新一次余额
+        setInterval(getBalance, 60000);
     </script>
 </body>
 </html>
